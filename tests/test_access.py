@@ -108,8 +108,3 @@ def test_code_for_one_order_does_not_open_another(clock, email):
     otp = OtpService(clock, email, {**ORDERS, "RR-20000": "priya.s@example.com"})
     otp.issue("RR-10482", "priya.s@example.com")
     assert otp.verify("RR-20000", "priya.s@example.com", email.last_code()) is False
-
-
-@pytest.mark.skip(reason="Decision pending: how long a one-time code stays valid")
-def test_code_expires():
-    pass

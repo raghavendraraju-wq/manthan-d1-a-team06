@@ -107,11 +107,6 @@ def test_declined_refund_moves_to_refund_failed(engine, gateway):
     assert engine.ledger_entries("I1") == []
 
 
-@pytest.mark.skip(reason="Decision pending: how a retry after a DECLINE works under the one-refund-per-item rule")
-def test_retry_after_decline():
-    pass
-
-
 def test_ledger_amount_matches_graded_amount(engine):
     to_inspected(engine, "I1", grade="C", category=Category.ELECTRONICS, price="12499")
     engine.apply(refund_requested("I1", "k-1"))
