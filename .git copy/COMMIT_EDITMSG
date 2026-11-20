@@ -1,0 +1,12 @@
+Add comprehensive test suite for return processing and alert rules
+
+- Introduced tests for alert rules validation using Prometheus' promtool.
+- Added decision tests to cover previously skipped cases in the suite.
+- Implemented end-to-end flow tests to validate the entire return process.
+- Created tests for handling late events and malformed events.
+- Developed replay tests to ensure consistent outcomes for identical event sequences.
+- Established rule eligibility tests for return windows based on item categories.
+- Added flagging tests for customers with excessive returns.
+- Implemented idempotency tests to ensure refunds are processed correctly.
+- Created pricing tests to validate refund amounts based on item grades.
+- Developed state machine tests to verify item state transitions during the return process.

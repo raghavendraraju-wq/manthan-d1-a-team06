@@ -160,7 +160,7 @@ export default function Agent() {
 
       {view && saved && (
         <section className="card" aria-labelledby="h-saved">
-          <h2 id="h-saved" ref={heading} tabIndex={-1} role="status">Inspection saved</h2>
+          <h2 id="h-saved" ref={heading} tabIndex={-1}>Inspection saved</h2>
           {view.items.map((item) => {
             const r = view.results?.find((x) => x.item_id === item.item_id);
             return (

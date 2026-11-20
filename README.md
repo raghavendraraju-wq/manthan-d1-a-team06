@@ -4,7 +4,43 @@ Runnable pytest tests against **interface stubs**. Every domain test fails with
 `NotImplementedError` until the team implements the stubs in `returnright/`.
 The Prometheus alert tests pass today, because the alert rules file is included.
 
-## Run
+## Run the app (Docker)
+
+Needs Docker Desktop (running) and nothing else. First start takes a few minutes (images, then seeding ~2,000 orders).
+
+```powershell
+docker compose up --build -d      # build and start everything
+docker compose ps                 # wait until api shows (healthy)
+start http://localhost:8088       # the app
+```
+
+| What | URL |
+|---|---|
+| App (customer + staff) | http://localhost:8088 |
+| Mailbox with the one-time codes | http://localhost:8025 |
+| Mock gateway switches (make refunds fail or time out) | http://localhost:8081/admin |
+| Prometheus (alerts, targets) | http://localhost:9090 |
+| API docs | http://localhost:8000/docs |
+
+Demo walk-through:
+
+1. **Customer**: open the app, "Return an item", order `RR-10482`, email `priya.s@example.com`. Read the 6-digit code at http://localhost:8025 (or `curl "http://localhost:8000/api/demo/last-code?email=priya.s@example.com"`). Pick items, reason, refund method, submit. You get a QR label and a status timeline.
+2. **Warehouse agent**: Staff sign-in, `arjun@returnright.test` / `demo-pass`. Enter the return code (e.g. `RTN-20xxx` from step 1), grade, Save inspection. An item whose refund is over ₹10,000 goes to finance.
+3. **Finance**: `meera@returnright.test` / `demo-pass`. Approve and pay (or Reject).
+4. **Manager**: `vikram@returnright.test` / `demo-pass`. Dashboard with 7/30/90 d period.
+
+Useful commands:
+
+```powershell
+docker compose logs -f api        # follow API logs
+docker compose down               # stop, keep data
+docker compose down -v            # stop and wipe the database (re-seeds next start)
+$env:WEB_PORT=9000; docker compose up -d   # if 8088 is taken
+```
+
+Without `DEMO_MODE=1` (set in `docker-compose.yml`) the demo logins and `/api/demo/*` helpers are off; do not ship that setting.
+
+## Run the tests
 
 ```powershell
 py -3.13 -m venv .venv

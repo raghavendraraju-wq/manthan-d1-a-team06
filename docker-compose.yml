@@ -1,0 +1,48 @@
+# docker compose up --build   ->  app on http://localhost:8088
+services:
+  db:
+    image: postgres:18
+    environment: { POSTGRES_USER: returnright, POSTGRES_PASSWORD: returnright, POSTGRES_DB: returnright }
+    volumes: ["dbdata:/var/lib/postgresql"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U returnright"]
+      interval: 5s
+      retries: 10
+
+  gateway:                       # mock payment gateway; switches at http://localhost:8081/admin
+    build: { context: ., dockerfile: gateway/Dockerfile }
+    ports: ["8081:8081"]
+    volumes: ["gwdata:/data"]
+
+  mailpit:                       # catches the one-time codes: http://localhost:8025
+    image: axllent/mailpit
+    ports: ["8025:8025"]
+
+  api:
+    build: { context: ., dockerfile: backend/Dockerfile }
+    environment:
+      DATABASE_URL: postgresql+psycopg://returnright:returnright@db:5432/returnright
+      GATEWAY_URL: http://gateway:8081
+      SMTP_HOST: mailpit
+      DEMO_MODE: "1"             # demo logins on /api/demo/info, mock carrier pickups. Turn off for anything real.
+    ports: ["8000:8000"]
+    volumes: ["uploads:/data/uploads"]
+    depends_on:
+      db: { condition: service_healthy }
+      gateway: { condition: service_started }
+
+  web:
+    build: ./frontend
+    ports: ["${WEB_PORT:-8088}:80"]   # 8080 is often taken (Airflow, Jenkins); override with WEB_PORT
+    depends_on: [api]
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/alerts.rules.yml:/etc/prometheus/alerts.rules.yml:ro
+    ports: ["9090:9090"]
+    depends_on: [api]
+
+volumes: { dbdata: {}, gwdata: {}, uploads: {} }

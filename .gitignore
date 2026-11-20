@@ -5,3 +5,6 @@ __pycache__/
 *.db-shm
 *.db-wal
 .claude/skills/
+node_modules/
+frontend/dist/
+uploads/
