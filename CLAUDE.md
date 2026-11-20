@@ -6,7 +6,7 @@ Read `docs/architecture.md` (system), `docs/build-plan.md` (steps, open decision
 
 ## How we work
 
-- **Ask before assuming or deciding.** Open decisions live in `docs/build-plan.md` §6; don't settle one in code.
+- **Ask before assuming or deciding.** Decisions D1–D10 are recorded in `docs/build-plan.md` §6; anything not there, ask.
 - Plan first, then build one step; commit after each **verified** step (tests run, not just written).
 - The tests in `tests/` are the contract. Never edit a test to make it pass; if a test looks wrong, ask.
 - Don't add a tool or library outside the agreed stack without asking (build plan D8).

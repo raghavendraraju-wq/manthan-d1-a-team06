@@ -62,9 +62,9 @@ item → `DuplicateRefund`; flags by arrival time, > 3 in 30 d, never block; ref
 | 7 | CI: lint, pytest, promtool, Playwright, build images | green run |
 | 8 | Playwright: the 10 e2e cases through the UI; defect log; `readme.html` | 10/10 pass |
 
-## 6. Decisions needed ❓
+## 6. Decisions (all accepted as recommended, 20 Nov 2026)
 
-| # | Question | Recommendation |
+| # | Question | Decision |
 |---|---|---|
 | D1 | The board's API is per **return** (`/returns/{id}/approve`), but state, finance and refunds are per **item**. | Per-item actions: `POST /returns/{id}/items/{item_id}/approve`. Inspection stays one call per return (one form). |
 | D2 | Who starts a ≤ ₹10k refund? (Tests use a system `REFUND_REQUESTED`; the prototype shows "goes straight to refund".) | The server raises it right after an accepted inspection that lands in Inspected; key = UUID made when the agent's form loads. |
