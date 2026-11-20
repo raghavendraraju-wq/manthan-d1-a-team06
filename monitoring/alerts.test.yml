@@ -1,0 +1,124 @@
+# promtool unit tests for alerts.rules.yml. Each case is crafted series in, expected alerts out.
+rule_files:
+  - alerts.rules.yml
+
+evaluation_interval: 1m
+
+tests:
+  # --- RefundSuccessRateLow -------------------------------------------------
+  - name: healthy refunds (98%) do not alert
+    interval: 1m
+    input_series:
+      - series: 'returnright_refunds_total{outcome="succeeded"}'
+        values: '0+98x20'
+      - series: 'returnright_refunds_total{outcome="declined"}'
+        values: '0+2x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: RefundSuccessRateLow
+        exp_alerts: []
+
+  - name: exactly 95% does not alert (strictly below)
+    interval: 1m
+    input_series:
+      - series: 'returnright_refunds_total{outcome="succeeded"}'
+        values: '0+95x20'
+      - series: 'returnright_refunds_total{outcome="timeout"}'
+        values: '0+5x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: RefundSuccessRateLow
+        exp_alerts: []
+
+  - name: gateway broken (90%) alerts
+    interval: 1m
+    input_series:
+      - series: 'returnright_refunds_total{outcome="succeeded"}'
+        values: '0+90x20'
+      - series: 'returnright_refunds_total{outcome="timeout"}'
+        values: '0+10x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: RefundSuccessRateLow
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+            exp_annotations:
+              summary: Refund success rate below 95% over the last 5 minutes
+              runbook: docs/runbook.md#refund-success-rate
+
+  - name: no refund traffic does not alert
+    interval: 1m
+    input_series:
+      - series: 'returnright_refunds_total{outcome="succeeded"}'
+        values: '0+0x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: RefundSuccessRateLow
+        exp_alerts: []
+
+  # --- GatewayLatencyHigh ---------------------------------------------------
+  - name: fast gateway does not alert
+    interval: 1m
+    input_series:
+      - series: 'returnright_gateway_request_duration_seconds_bucket{le="1"}'
+        values: '0+10x20'
+      - series: 'returnright_gateway_request_duration_seconds_bucket{le="5"}'
+        values: '0+10x20'
+      - series: 'returnright_gateway_request_duration_seconds_bucket{le="10"}'
+        values: '0+10x20'
+      - series: 'returnright_gateway_request_duration_seconds_bucket{le="+Inf"}'
+        values: '0+10x20'
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: GatewayLatencyHigh
+        exp_alerts: []
+
+  - name: slow gateway waits 5 minutes, then alerts
+    interval: 1m
+    input_series:
+      - series: 'returnright_gateway_request_duration_seconds_bucket{le="1"}'
+        values: '0+1x20'
+      - series: 'returnright_gateway_request_duration_seconds_bucket{le="5"}'
+        values: '0+2x20'
+      - series: 'returnright_gateway_request_duration_seconds_bucket{le="10"}'
+        values: '0+10x20'
+      - series: 'returnright_gateway_request_duration_seconds_bucket{le="+Inf"}'
+        values: '0+10x20'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: GatewayLatencyHigh
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: GatewayLatencyHigh
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: Payment gateway p95 latency above 5 s for 5 minutes
+              runbook: docs/runbook.md#gateway-latency
+
+  # --- Replay: the same input as the case above must give the same alerts --
+  - name: replay of slow gateway gives identical alerts
+    interval: 1m
+    input_series:
+      - series: 'returnright_gateway_request_duration_seconds_bucket{le="1"}'
+        values: '0+1x20'
+      - series: 'returnright_gateway_request_duration_seconds_bucket{le="5"}'
+        values: '0+2x20'
+      - series: 'returnright_gateway_request_duration_seconds_bucket{le="10"}'
+        values: '0+10x20'
+      - series: 'returnright_gateway_request_duration_seconds_bucket{le="+Inf"}'
+        values: '0+10x20'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: GatewayLatencyHigh
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: GatewayLatencyHigh
+        exp_alerts:
+          - exp_labels:
+              severity: warning
+            exp_annotations:
+              summary: Payment gateway p95 latency above 5 s for 5 minutes
+              runbook: docs/runbook.md#gateway-latency
